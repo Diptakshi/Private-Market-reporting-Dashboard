@@ -1,0 +1,5 @@
+asset_class,target_weight,sort_order
+Private Equity,0.4,1
+Private Debt,0.2,2
+Real Estate,0.2,3
+Infrastructure,0.2,4

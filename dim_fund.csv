@@ -1,0 +1,14 @@
+fund_id,fund_name,asset_class,vintage,commitment_eur_m
+F01,Buyout Fund A,Private Equity,2017,60
+F02,Growth Fund B,Private Equity,2019,50
+F03,Buyout Fund C,Private Equity,2021,70
+F04,Mid-Market Fund D,Private Equity,2023,60
+F05,Direct Lending Fund E,Private Debt,2018,50
+F06,Senior Debt Fund F,Private Debt,2020,45
+F07,Unitranche Fund G,Private Debt,2022,55
+F08,Value-Add RE Fund H,Real Estate,2017,40
+F09,Core-Plus RE Fund I,Real Estate,2020,40
+F10,Logistics RE Fund J,Real Estate,2023,35
+F11,Core Infra Fund K,Infrastructure,2018,50
+F12,Energy Transition Fund L,Infrastructure,2021,55
+F13,Digital Infra Fund M,Infrastructure,2024,45

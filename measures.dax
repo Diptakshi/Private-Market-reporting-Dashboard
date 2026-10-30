@@ -1,0 +1,82 @@
+// =====================================================================
+// Private Markets Reporting - DAX measures
+// Create a blank table "_Measures" (Enter data > OK) and add these.
+// All "as of" measures read the latest date selected on dim_date.
+// =====================================================================
+
+As Of Date = MAX ( dim_date[date] )
+
+Committed =
+SUM ( dim_fund[commitment_eur_m] )
+
+Paid In (cum) =
+VAR AsOf = [As Of Date]
+RETURN CALCULATE ( SUM ( fact_cashflows[call] ), REMOVEFILTERS ( dim_date ), dim_date[date] <= AsOf )
+
+Distributed (cum) =
+VAR AsOf = [As Of Date]
+RETURN CALCULATE ( SUM ( fact_cashflows[distribution] ), REMOVEFILTERS ( dim_date ), dim_date[date] <= AsOf )
+
+NAV =
+VAR AsOf = [As Of Date]
+RETURN CALCULATE ( SUM ( fact_cashflows[nav] ), REMOVEFILTERS ( dim_date ), dim_date[date] = AsOf )
+
+Unfunded = [Committed] - [Paid In (cum)]
+
+Total Value = [Distributed (cum)] + [NAV]
+
+TVPI = DIVIDE ( [Total Value], [Paid In (cum)] )
+DPI  = DIVIDE ( [Distributed (cum)], [Paid In (cum)] )
+RVPI = DIVIDE ( [NAV], [Paid In (cum)] )
+
+// Quarterly flows (for column charts on a date axis)
+Calls (qtr)         = -SUM ( fact_cashflows[call] )
+Distributions (qtr) = SUM ( fact_cashflows[distribution] )
+Net Cash Flow (qtr) = SUM ( fact_cashflows[net_cashflow] )
+
+Cumulative Net Cash Flow =
+VAR d = MAX ( dim_date[date] )
+RETURN CALCULATE ( SUM ( fact_cashflows[net_cashflow] ), REMOVEFILTERS ( dim_date ), dim_date[date] <= d )
+
+// Net IRR: XIRR on net LP cash flows, with NAV at the as-of date as terminal value
+Net IRR =
+VAR AsOf = [As Of Date]
+VAR Dates =
+    CALCULATETABLE ( VALUES ( fact_cashflows[date] ), REMOVEFILTERS ( dim_date ), dim_date[date] <= AsOf )
+VAR Flows =
+    ADDCOLUMNS (
+        Dates,
+        "@cf",
+            CALCULATE ( SUM ( fact_cashflows[net_cashflow] ), REMOVEFILTERS ( dim_date ) )
+                + IF ( fact_cashflows[date] = AsOf,
+                       CALCULATE ( SUM ( fact_cashflows[nav] ), REMOVEFILTERS ( dim_date ) ), 0 )
+    )
+RETURN IFERROR ( XIRR ( Flows, [@cf], fact_cashflows[date] ), BLANK () )
+
+// Kaplan-Schoar PME vs the listed equity index (> 1 = outperformance)
+KS-PME =
+VAR AsOf = [As Of Date]
+VAR IdxEnd = LOOKUPVALUE ( fact_benchmark[index_level], fact_benchmark[date], AsOf )
+VAR Dates =
+    CALCULATETABLE ( VALUES ( fact_cashflows[date] ), REMOVEFILTERS ( dim_date ), dim_date[date] <= AsOf )
+VAR T =
+    ADDCOLUMNS (
+        Dates,
+        "@g",  DIVIDE ( IdxEnd, LOOKUPVALUE ( fact_benchmark[index_level], fact_benchmark[date], fact_cashflows[date] ) ),
+        "@c",  CALCULATE ( SUM ( fact_cashflows[call] ), REMOVEFILTERS ( dim_date ) ),
+        "@d",  CALCULATE ( SUM ( fact_cashflows[distribution] ), REMOVEFILTERS ( dim_date ) )
+    )
+VAR FVd = SUMX ( T, [@d] * [@g] ) + [NAV]
+VAR FVc = SUMX ( T, [@c] * [@g] )
+RETURN DIVIDE ( FVd, FVc )
+
+// Allocation vs target (use with dim_asset_class[asset_class] on the axis)
+NAV Weight =
+DIVIDE ( [NAV], CALCULATE ( [NAV], REMOVEFILTERS ( dim_fund ), REMOVEFILTERS ( dim_asset_class ) ) )
+
+Target Weight = SELECTEDVALUE ( dim_asset_class[target_weight] )
+
+Over / Under Target = [NAV Weight] - [Target Weight]
+
+// Formatting helpers
+TVPI Label = FORMAT ( [TVPI], "0.00" ) & "x"
