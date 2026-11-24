@@ -1,0 +1,16 @@
+{
+  "name": "Private Markets",
+  "dataColors": [
+    "#2a78d6",
+    "#eb6834",
+    "#1baf7a",
+    "#eda100",
+    "#6b5bd2",
+    "#7f8c8d",
+    "#c0392b",
+    "#16a085"
+  ],
+  "background": "#FFFFFF",
+  "foreground": "#1f2933",
+  "tableAccent": "#2a78d6"
+}
