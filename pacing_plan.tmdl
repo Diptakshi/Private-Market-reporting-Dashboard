@@ -1,0 +1,52 @@
+table pacing_plan
+	lineageTag: e38c4782-da65-5d8b-9670-7e24ed3bb3c1
+
+	column year
+		dataType: int64
+		formatString: 0
+		lineageTag: e2d925b0-8db8-15f9-7392-acbf27a62710
+		summarizeBy: none
+		sourceColumn: year
+
+	column asset_class
+		dataType: string
+		lineageTag: 16441864-601e-7070-4735-280728f16963
+		summarizeBy: none
+		sourceColumn: asset_class
+
+	column commitment
+		dataType: double
+		formatString: #,0
+		lineageTag: 58b3433b-a61b-31dc-3d77-cb51b1cf4010
+		summarizeBy: sum
+		sourceColumn: commitment
+
+	column projected_nav
+		dataType: double
+		formatString: #,0
+		lineageTag: 34ff8a49-a898-f73b-70b8-da7980954361
+		summarizeBy: sum
+		sourceColumn: projected_nav
+
+	column target_nav
+		dataType: double
+		formatString: #,0
+		lineageTag: 9ea84634-cffb-386e-c0f7-ce123ee6e801
+		summarizeBy: sum
+		sourceColumn: target_nav
+
+	column total_portfolio
+		dataType: double
+		formatString: #,0
+		lineageTag: 4fe45680-eb34-e6cc-3c98-b22360de167c
+		summarizeBy: none
+		sourceColumn: total_portfolio
+
+	partition pacing_plan = m
+		mode: import
+		source =
+				let
+					Source = fnLoadCsv("pacing_plan.csv"),
+					Typed = Table.TransformColumnTypes(Source, {{"year", Int64.Type}, {"asset_class", type text}, {"commitment", type number}, {"projected_nav", type number}, {"target_nav", type number}, {"total_portfolio", type number}}, "en-US")
+				in
+					Typed

@@ -1,0 +1,45 @@
+table dim_fund
+	lineageTag: 48cf2f5c-e510-3f5c-580f-cb2c69de5d5e
+
+	column fund_id
+		dataType: string
+		isKey
+		lineageTag: ba6801ee-301d-6f03-ccf3-df728ca5e9e1
+		summarizeBy: none
+		sourceColumn: fund_id
+
+	column fund_name
+		dataType: string
+		lineageTag: 8835d387-c0e7-f350-ae19-5c5ac5b4e8b4
+		summarizeBy: none
+		sourceColumn: fund_name
+
+	column asset_class
+		dataType: string
+		isHidden
+		lineageTag: 0a3770ed-384a-6f8f-ae4a-dcd26aa574f3
+		summarizeBy: none
+		sourceColumn: asset_class
+
+	column vintage
+		dataType: int64
+		formatString: 0
+		lineageTag: cfafe7ea-59df-c0e0-f96b-3d6fd9714417
+		summarizeBy: none
+		sourceColumn: vintage
+
+	column commitment_eur_m
+		dataType: double
+		formatString: #,0
+		lineageTag: c2dbbd7d-3743-4305-ba5b-955a60d6e235
+		summarizeBy: sum
+		sourceColumn: commitment_eur_m
+
+	partition dim_fund = m
+		mode: import
+		source =
+				let
+					Source = fnLoadCsv("dim_fund.csv"),
+					Typed = Table.TransformColumnTypes(Source, {{"fund_id", type text}, {"fund_name", type text}, {"asset_class", type text}, {"vintage", Int64.Type}, {"commitment_eur_m", type number}}, "en-US")
+				in
+					Typed

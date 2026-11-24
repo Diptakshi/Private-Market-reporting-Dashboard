@@ -1,0 +1,26 @@
+table fact_benchmark
+	lineageTag: b06f1118-16b1-66c8-7fdc-a17cf1ecc282
+
+	column date
+		dataType: dateTime
+		formatString: dd mmm yyyy
+		isHidden
+		lineageTag: b31dae02-d5d0-d340-096f-53a189795745
+		summarizeBy: none
+		sourceColumn: date
+
+	column index_level
+		dataType: double
+		formatString: #,0.00
+		lineageTag: 09054f8f-bb30-412f-906e-2d74fa57609c
+		summarizeBy: none
+		sourceColumn: index_level
+
+	partition fact_benchmark = m
+		mode: import
+		source =
+				let
+					Source = fnLoadCsv("fact_benchmark.csv"),
+					Typed = Table.TransformColumnTypes(Source, {{"date", type date}, {"index_level", type number}}, "en-US")
+				in
+					Typed

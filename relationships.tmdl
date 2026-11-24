@@ -1,0 +1,15 @@
+relationship 4b31e47f-15d0-2fed-1bc7-5ac9dbc59286
+	fromColumn: fact_cashflows.fund_id
+	toColumn: dim_fund.fund_id
+
+relationship a92ed41a-ebcd-8ec7-a419-b33df283e324
+	fromColumn: fact_cashflows.date
+	toColumn: dim_date.date
+
+relationship 29c9a035-f4bb-b637-c5df-a2498d25b3f1
+	fromColumn: fact_benchmark.date
+	toColumn: dim_date.date
+
+relationship aef5a446-1b9e-983e-383f-100813d92b9f
+	fromColumn: dim_fund.asset_class
+	toColumn: dim_asset_class.asset_class

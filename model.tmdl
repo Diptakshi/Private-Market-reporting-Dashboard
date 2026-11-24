@@ -1,0 +1,19 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+ref table _Measures
+ref table dim_asset_class
+ref table dim_date
+ref table dim_fund
+ref table fact_cashflows
+ref table fact_benchmark
+ref table pacing_plan
+ref table evergreen_tradeoff
+

@@ -1,0 +1,53 @@
+table evergreen_tradeoff
+	lineageTag: 45119b51-eaa6-cd1e-2b6a-db20e5b61eab
+
+	column liquid_target
+		dataType: double
+		formatString: 0%
+		lineageTag: dc825020-e291-a682-7424-50071725732d
+		summarizeBy: none
+		sourceColumn: liquid_target
+
+	column prob_gate_10y
+		dataType: double
+		formatString: 0.0%
+		lineageTag: 3c2ff979-d9d8-b3b0-15de-dcff569f2259
+		summarizeBy: sum
+		sourceColumn: prob_gate_10y
+
+	column prob_forced_sale_10y
+		dataType: double
+		formatString: 0.0%
+		lineageTag: b50f7649-ff1d-5728-4364-207efcc20fb3
+		summarizeBy: sum
+		sourceColumn: prob_forced_sale_10y
+
+	column median_min_liquidity
+		dataType: double
+		formatString: 0.0%
+		lineageTag: 59196f11-7e0b-4031-f568-b8e68c360337
+		summarizeBy: sum
+		sourceColumn: median_min_liquidity
+
+	column p5_min_liquidity
+		dataType: double
+		formatString: 0.0%
+		lineageTag: 8eca73fb-703b-f669-9a4f-53005ad99fe3
+		summarizeBy: sum
+		sourceColumn: p5_min_liquidity
+
+	column expected_return_drag
+		dataType: double
+		formatString: 0.00%
+		lineageTag: f3ad2d97-8bb9-cd34-8cf2-89a3c318e560
+		summarizeBy: sum
+		sourceColumn: expected_return_drag
+
+	partition evergreen_tradeoff = m
+		mode: import
+		source =
+				let
+					Source = fnLoadCsv("evergreen_tradeoff.csv"),
+					Typed = Table.TransformColumnTypes(Source, {{"liquid_target", type number}, {"prob_gate_10y", type number}, {"prob_forced_sale_10y", type number}, {"median_min_liquidity", type number}, {"p5_min_liquidity", type number}, {"expected_return_drag", type number}}, "en-US")
+				in
+					Typed

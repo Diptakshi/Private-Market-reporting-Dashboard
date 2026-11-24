@@ -1,0 +1,66 @@
+table fact_cashflows
+	lineageTag: bfbfbd83-35a7-e5b6-101f-c7e0e6b8df2f
+
+	column fund_id
+		dataType: string
+		isHidden
+		lineageTag: 53577cc5-89e4-a3ce-c864-d4fb04be4f63
+		summarizeBy: none
+		sourceColumn: fund_id
+
+	column date
+		dataType: dateTime
+		formatString: dd mmm yyyy
+		isHidden
+		lineageTag: e8d1190f-d54a-bfe5-7b9f-35ffce656e60
+		summarizeBy: none
+		sourceColumn: date
+
+	column fund_quarter
+		dataType: int64
+		formatString: 0
+		lineageTag: ec6abedd-dee4-a95c-9a0a-436623c6bcbf
+		summarizeBy: none
+		sourceColumn: fund_quarter
+
+	column call
+		dataType: double
+		formatString: #,0.0
+		lineageTag: 0cee6235-fb94-0637-ac58-0a1fe44c3492
+		summarizeBy: sum
+		sourceColumn: call
+
+	column distribution
+		dataType: double
+		formatString: #,0.0
+		lineageTag: 1081b359-27dd-b13c-b812-a2d2fc030482
+		summarizeBy: sum
+		sourceColumn: distribution
+
+	column nav
+		dataType: double
+		formatString: #,0.0
+		lineageTag: 6736e6c2-0198-a105-1666-c9b77ab73d35
+		summarizeBy: sum
+		sourceColumn: nav
+
+	column net_cashflow
+		dataType: double
+		formatString: #,0.0
+		lineageTag: 77ca732a-fba3-56b5-2ca9-23b510954fff
+		summarizeBy: sum
+		sourceColumn: net_cashflow
+
+	partition fact_cashflows = m
+		mode: import
+		source =
+				let
+					Source = fnLoadCsv("fact_cashflows.csv"),
+					Typed = Table.TransformColumnTypes(Source, {{"fund_id", type text}, {"date", type date}, {"fund_quarter", Int64.Type}, {"call", type number}, {"distribution", type number}, {"nav", type number}, {"net_cashflow", type number}}, "en-US"),
+					// Data-quality checks: stop the refresh if a rule is broken
+					NoNegatives = if Table.RowCount(Table.SelectRows(Typed, each [call] < 0 or [distribution] < 0 or [nav] < -0.001)) > 0
+						then error "fact_cashflows: negative call, distribution or NAV found" else Typed,
+					NoDupes = if Table.RowCount(NoNegatives) <> Table.RowCount(Table.Distinct(NoNegatives, {"fund_id", "date"}))
+						then error "fact_cashflows: duplicate fund_id/date rows" else NoNegatives
+				in
+					NoDupes

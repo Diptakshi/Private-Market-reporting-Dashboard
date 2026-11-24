@@ -1,0 +1,46 @@
+table dim_date
+	lineageTag: 39aa9573-0907-fc94-dbb3-1b66e11ac77f
+	dataCategory: Time
+
+	column date
+		dataType: dateTime
+		formatString: dd mmm yyyy
+		isKey
+		lineageTag: 946c99f3-2411-dc73-cf84-56ee4e73597c
+		summarizeBy: none
+		sourceColumn: date
+
+	column year
+		dataType: int64
+		formatString: 0
+		lineageTag: 9232a9df-a22f-ee62-15ed-b1b289fb30a4
+		summarizeBy: none
+		sourceColumn: year
+
+	column quarter
+		dataType: string
+		lineageTag: 2a413a89-b0dc-c119-57f0-c3c5007fb1db
+		summarizeBy: none
+		sourceColumn: quarter
+
+	column year_quarter
+		dataType: string
+		lineageTag: 40773902-2948-0f81-30fc-c41123b779ed
+		summarizeBy: none
+		sourceColumn: year_quarter
+
+	column quarter_index
+		dataType: int64
+		formatString: 0
+		lineageTag: b2e33300-8531-45bd-31a6-72a6241cf2d3
+		summarizeBy: none
+		sourceColumn: quarter_index
+
+	partition dim_date = m
+		mode: import
+		source =
+				let
+					Source = fnLoadCsv("dim_date.csv"),
+					Typed = Table.TransformColumnTypes(Source, {{"date", type date}, {"year", Int64.Type}, {"quarter", type text}, {"year_quarter", type text}, {"quarter_index", Int64.Type}}, "en-US")
+				in
+					Typed

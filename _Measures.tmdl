@@ -1,0 +1,170 @@
+table _Measures
+	lineageTag: 66032ea1-6fbc-19b4-4351-493c4c225760
+
+	/// Latest date in the current selection; every 'as of' measure reads it.
+	measure 'As Of Date' = MAX ( dim_date[date] )
+		formatString: dd mmm yyyy
+		lineageTag: 954ae20d-3888-dd5f-ce92-539b152f22bf
+
+	/// Total commitments, EUR m.
+	measure Committed = SUM ( dim_fund[commitment_eur_m] )
+		formatString: #,0
+		lineageTag: 40d22e01-50d5-1d5c-0b4d-ed3bbb7d7064
+
+	/// Cumulative capital called up to the as-of date, EUR m.
+	measure 'Paid In (cum)' = ```
+			VAR AsOf = [As Of Date]
+			RETURN
+			    CALCULATE ( SUM ( fact_cashflows[call] ), REMOVEFILTERS ( dim_date ), dim_date[date] <= AsOf )
+			```
+		formatString: #,0
+		lineageTag: 18000d1d-aa27-4bf0-9caf-684ef3c733a8
+
+	/// Cumulative distributions up to the as-of date, EUR m.
+	measure 'Distributed (cum)' = ```
+			VAR AsOf = [As Of Date]
+			RETURN
+			    CALCULATE ( SUM ( fact_cashflows[distribution] ), REMOVEFILTERS ( dim_date ), dim_date[date] <= AsOf )
+			```
+		formatString: #,0
+		lineageTag: 428ddae0-173b-8bc3-5cb4-79276ec372e3
+
+	/// Net asset value at the as-of date, EUR m.
+	measure NAV = ```
+			VAR AsOf = [As Of Date]
+			RETURN
+			    CALCULATE ( SUM ( fact_cashflows[nav] ), REMOVEFILTERS ( dim_date ), dim_date[date] = AsOf )
+			```
+		formatString: #,0
+		lineageTag: 10bdf364-8a39-53c4-9e7a-afd45d005543
+
+	/// Commitments not yet called, EUR m.
+	measure Unfunded = [Committed] - [Paid In (cum)]
+		formatString: #,0
+		lineageTag: da66d2b3-4c73-3b18-6d3e-ff794116380b
+
+	measure 'Total Value' = [Distributed (cum)] + [NAV]
+		formatString: #,0
+		lineageTag: 9f1e2ea5-3a47-61cd-38e3-d03abf52fdf2
+
+	/// Total value to paid-in.
+	measure TVPI = DIVIDE ( [Total Value], [Paid In (cum)] )
+		formatString: 0.00
+		lineageTag: 4342d20e-2ae3-ff27-4060-33251ed22d8f
+
+	/// Distributions to paid-in (realised multiple).
+	measure DPI = DIVIDE ( [Distributed (cum)], [Paid In (cum)] )
+		formatString: 0.00
+		lineageTag: 8256e050-600c-d339-e2e2-173ba97efcdb
+
+	/// Residual value to paid-in (unrealised multiple).
+	measure RVPI = DIVIDE ( [NAV], [Paid In (cum)] )
+		formatString: 0.00
+		lineageTag: ff199645-664d-900c-92f2-53a04f876574
+
+	/// Capital calls in the period, shown negative.
+	measure 'Calls (qtr)' = -SUM ( fact_cashflows[call] )
+		formatString: #,0.0
+		lineageTag: 0b1df9f7-4151-92f0-69e5-88e8f17a583c
+
+	measure 'Distributions (qtr)' = SUM ( fact_cashflows[distribution] )
+		formatString: #,0.0
+		lineageTag: a51ffd70-43b4-52e0-c821-41b5b8c23f16
+
+	measure 'Net Cash Flow (qtr)' = SUM ( fact_cashflows[net_cashflow] )
+		formatString: #,0.0
+		lineageTag: 861e219a-ba18-9645-ff74-483d7250a9d8
+
+	/// Running net cash flow to the LP: the J-curve.
+	measure 'Cumulative Net Cash Flow' = ```
+			VAR d = MAX ( dim_date[date] )
+			RETURN
+			    CALCULATE ( SUM ( fact_cashflows[net_cashflow] ), REMOVEFILTERS ( dim_date ), dim_date[date] <= d )
+			```
+		formatString: #,0
+		lineageTag: 9b4ad061-87e2-c645-f5fe-56d20f30e85e
+
+	/// XIRR on net LP cash flows, with NAV at the as-of date as terminal value.
+	measure 'Net IRR' = ```
+			VAR AsOf = [As Of Date]
+			VAR Dates =
+			    CALCULATETABLE ( VALUES ( fact_cashflows[date] ), REMOVEFILTERS ( dim_date ), dim_date[date] <= AsOf )
+			VAR Flows =
+			    ADDCOLUMNS (
+			        Dates,
+			        "@cf",
+			            CALCULATE ( SUM ( fact_cashflows[net_cashflow] ), REMOVEFILTERS ( dim_date ) )
+			                + IF (
+			                    fact_cashflows[date] = AsOf,
+			                    CALCULATE ( SUM ( fact_cashflows[nav] ), REMOVEFILTERS ( dim_date ) ),
+			                    0
+			                )
+			    )
+			RETURN
+			    IFERROR ( XIRR ( Flows, [@cf], fact_cashflows[date] ), BLANK () )
+			```
+		formatString: 0.0%
+		lineageTag: c438a465-2c56-f7d8-81de-f168f71b9f29
+
+	/// Kaplan-Schoar PME against the listed index; above 1 = outperformance.
+	measure 'KS-PME' = ```
+			VAR AsOf = [As Of Date]
+			VAR IdxEnd =
+			    CALCULATE (
+			        LOOKUPVALUE ( fact_benchmark[index_level], fact_benchmark[date], AsOf ),
+			        REMOVEFILTERS ( dim_date )
+			    )
+			VAR Dates =
+			    CALCULATETABLE ( VALUES ( fact_cashflows[date] ), REMOVEFILTERS ( dim_date ), dim_date[date] <= AsOf )
+			VAR T =
+			    ADDCOLUMNS (
+			        Dates,
+			        "@g",
+			            DIVIDE (
+			                IdxEnd,
+			                CALCULATE (
+			                    LOOKUPVALUE ( fact_benchmark[index_level], fact_benchmark[date], fact_cashflows[date] ),
+			                    REMOVEFILTERS ( dim_date )
+			                )
+			            ),
+			        "@c", CALCULATE ( SUM ( fact_cashflows[call] ), REMOVEFILTERS ( dim_date ) ),
+			        "@d", CALCULATE ( SUM ( fact_cashflows[distribution] ), REMOVEFILTERS ( dim_date ) )
+			    )
+			VAR FVd = SUMX ( T, [@d] * [@g] ) + [NAV]
+			VAR FVc = SUMX ( T, [@c] * [@g] )
+			RETURN
+			    DIVIDE ( FVd, FVc )
+			```
+		formatString: 0.00
+		lineageTag: c6e2bb11-5634-7cbc-9e47-e7198c7e0847
+
+	/// Share of total NAV.
+	measure 'NAV Weight' = DIVIDE ( [NAV], CALCULATE ( [NAV], REMOVEFILTERS ( dim_fund ), REMOVEFILTERS ( dim_asset_class ) ) )
+		formatString: 0.0%
+		lineageTag: 3c2a9249-655d-e6e0-7c44-3f1fd47b694f
+
+	measure 'Target Weight' = SELECTEDVALUE ( dim_asset_class[target_weight] )
+		formatString: 0.0%
+		lineageTag: 59f4e7be-e2a2-1591-6318-db296198a735
+
+	measure 'Over / Under Target' = [NAV Weight] - [Target Weight]
+		formatString: +0.0%;-0.0%;0.0%
+		lineageTag: 75d12f09-dc45-ff1b-b6a4-cb7f84eb27a0
+
+	measure 'TVPI Label' = FORMAT ( [TVPI], "0.00" ) & "x"
+		lineageTag: ce454981-4063-a1ea-5b4e-58d42e9022c4
+
+	column Column
+		dataType: string
+		isHidden
+		lineageTag: 33513e02-e251-3b16-7044-3deae4e0723e
+		summarizeBy: none
+		sourceColumn: Column
+
+	partition _Measures = m
+		mode: import
+		source =
+				let
+					Source = #table(type table [Column = text], {})
+				in
+					Source
