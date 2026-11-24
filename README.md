@@ -14,15 +14,7 @@ liquidity of an evergreen fund.
 > [Private-Market-Allocation](https://github.com/Diptakshi/Private-Market-Allocation) (Takahashi–Alexander cash-flow model).
 > Fund names are fictional.
 
-## Open it in Power BI (Windows)
-1. Download the repo (Code → Download ZIP) and unzip it.
-2. Open `pbip/Private_Markets_Dashboard.pbip` in Power BI Desktop.
-3. Click **Refresh**. The data loads straight from this repo; if asked for credentials for
-   `raw.githubusercontent.com`, choose **Anonymous**.
-4. Check the cards against the expected values in `BUILD_GUIDE.md` (TVPI ≈ 1.34x, DPI ≈ 0.71x, Net IRR ≈ 9%).
 
-The `pbip/` folder is the Power BI Project in text form (TMDL model + report definition), so every
-measure, query and visual can be reviewed and versioned in Git.
 
 ## Contents
 ```
