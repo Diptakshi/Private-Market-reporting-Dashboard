@@ -4,13 +4,16 @@
 > machine (Parallels / UTM), or a cloud Windows desktop. Until then, `preview/dashboard.html` shows the
 > intended design.
 
+> **Fastest route:** open `pbip/Private_Markets_Dashboard.pbip` and click Refresh: the model, measures and
+> four pages are already built. The steps below rebuild everything by hand.
+
 ## 1. Load the data (Power Query)
 1. **Home → Transform data** opens the Power Query editor.
-2. **Manage Parameters → New**: name it `DataFolder`, type *Text*, value = full path to `data\`
+2. **Manage Parameters → New**: name it `DataFolder`, type *Text*, value = full path to the folder holding the CSVs
    (ending with `\`).
-3. **New Source → Blank Query → Advanced Editor**. Paste `powerquery/fnLoadCsv.m` and rename the
+3. **New Source → Blank Query → Advanced Editor**. Paste `fnLoadCsv.m` and rename the
    query `fnLoadCsv`.
-4. For each remaining file in `powerquery/`, create a blank query, paste the code and name the query
+4. For each remaining `.m` file, create a blank query, paste the code and name the query
    after the file (`dim_fund`, `dim_date`, `dim_asset_class`, `fact_cashflows`, `fact_benchmark`,
    `pacing_plan`, `evergreen_tradeoff`).
 5. **Close & Apply.** `fact_cashflows` includes two data-quality checks (no negative flows, no
@@ -29,7 +32,7 @@ Mark as date table → date**). Hide the foreign-key columns in the fact tables.
 
 ## 3. Measures
 Create an empty table `_Measures` (**Home → Enter data → OK**). Add every measure from
-`dax/measures.dax`. Formats: EUR m measures `#,0`; TVPI/DPI/RVPI/KS-PME `0.00`; Net IRR and the
+`measures.dax`. Formats: EUR m measures `#,0`; TVPI/DPI/RVPI/KS-PME `0.00`; Net IRR and the
 weights as percentages with one decimal place.
 
 ## 4. Pages
